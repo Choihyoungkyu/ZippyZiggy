@@ -1,4 +1,4 @@
-package com.zippyziggy.member.model;
+package com.zippyziggy.gateway.model;
 
 import lombok.Getter;
 import lombok.ToString;
