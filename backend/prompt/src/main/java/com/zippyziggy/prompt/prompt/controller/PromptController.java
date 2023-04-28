@@ -57,7 +57,6 @@ public class PromptController {
 	 * @param crntMemberUuid
 	 * @return
 	 */
-
 	@Operation(summary = "프롬프트 생성", description = "프롬프트를 생성한다.")
 	@PostMapping(value = "", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
 	@ApiResponses({
@@ -128,7 +127,7 @@ public class PromptController {
 	})
 	public ResponseEntity<?> removePrompt(@PathVariable String promptUuid,
 										  @RequestHeader String crntMemberUuid) {
-		promptService.removePrompt(UUID.fromString(promptUuid), UUID.fromString(crntMemberUuid));
+		promptService.removePrompt(promptUuid, UUID.fromString(crntMemberUuid));
 		return ResponseEntity.ok("삭제 완료");
 	}
 

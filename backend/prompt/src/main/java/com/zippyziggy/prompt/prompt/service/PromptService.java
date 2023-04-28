@@ -215,7 +215,8 @@ public class PromptService{
 	본인이 작성한 프롬프트인지 확인 필요
 	 */
 
-	public void removePrompt(UUID promptUuid, UUID crntMemberUuid) {
+	public void removePrompt(String strPromptUuid, UUID crntMemberUuid) {
+		final UUID promptUuid = UUID.fromString(strPromptUuid);
 		Prompt prompt = promptRepository.findByPromptUuid(promptUuid).orElseThrow(PromptNotFoundException::new);
 
 		if (!crntMemberUuid.equals(prompt.getMemberUuid())) {
@@ -223,6 +224,12 @@ public class PromptService{
 		}
 
 		awsS3Uploader.delete("thumbnails/" , prompt.getThumbnail());
+
+		// 수정 시 search 서비스에 Elasticsearch DELETE 요청
+		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
+		final EsPromptRequest esPromptRequest = EsPromptRequest.of(prompt);
+		circuitBreaker.run(() -> searchClient.deleteEsPrompt(strPromptUuid));
+
 		promptRepository.delete(prompt);
 	}
 
