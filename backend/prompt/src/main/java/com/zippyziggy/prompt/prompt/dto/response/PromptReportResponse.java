@@ -7,7 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Data
@@ -22,7 +24,7 @@ public class PromptReportResponse {
     private String promptLanguages;
     private UUID originMemberUuid;
     private String content;
-    private LocalDateTime regDt;
+    private long regDt;
 
     public static Page<PromptReportResponse> from(Page<PromptReport> list) {
         Page<PromptReportResponse> promptReportResponses = list.map(m ->
@@ -34,7 +36,7 @@ public class PromptReportResponse {
                         .promptLanguages(m.getPrompt().getLanguages().getDescription())
                         .originMemberUuid(m.getPrompt().getMemberUuid())
                         .content(m.getContent())
-                        .regDt(m.getRegDt()).build());
+                        .regDt(m.getRegDt().atZone(ZoneId.systemDefault()).toInstant().getEpochSecond()).build());
         return promptReportResponses;
     }
 

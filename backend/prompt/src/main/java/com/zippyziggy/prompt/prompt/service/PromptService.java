@@ -53,6 +53,7 @@ public class PromptService{
 	private final SearchClient searchClient;
 	private final RatingRepository ratingRepository;
 	private final PromptReportRepository promptReportRepository;
+	private final PromptClickRepository promptClickRepository;
 	private final KafkaProducer kafkaProducer;
 
 	// Exception 처리 필요
@@ -197,6 +198,9 @@ public class PromptService{
 			promptDetailResponse.setOriginerResponse(originalMemberInfo.toOriginerResponse());
 		}
 
+		// 프롬프트 조회 시 최근 조회 테이블에 추가
+		promptClickRepository.save(PromptClick.from(prompt, UUID.fromString(crntMemberUuid)));
+
 		return promptDetailResponse;
 	}
 
@@ -234,7 +238,6 @@ public class PromptService{
     /*
     프롬프트 좋아요 처리
      */
-
 	public void likePrompt(UUID promptUuid, String crntMemberUuid) {
 
 		// 좋아요 상태 추적
@@ -274,7 +277,6 @@ public class PromptService{
     로그인한 유저가 프롬프트를 좋아요 했는지 확인하는 로직
     null이 아니면 좋아요를 한 상태, null이면 좋아요를 하지 않은 상태
      */
-
 	private PromptLike likePromptExist(UUID promptUuid, String crntMemberUuid) {
 		Prompt prompt = promptRepository.findByPromptUuid(promptUuid).orElseThrow(PromptNotFoundException::new);
 		PromptLike promptLike = promptLikeRepository.findByPromptAndMemberUuid(prompt, UUID.fromString(crntMemberUuid));
@@ -419,5 +421,45 @@ public class PromptService{
 		Page<PromptReportResponse> promptReportResponse = PromptReportResponse.from(reports);
 		return promptReportResponse;
 	}
+
+	/*
+	최근 조회한 프롬프트 5개 조회
+	 */
+	public List<PromptCardResponse> recentPrompts(String crntMemberUuid) {
+
+		if (crntMemberUuid.equals("defaultValue")) {
+			return null;
+		} else {
+
+			CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
+			MemberResponse writerInfo = circuitBreaker.run(() -> memberClient.getMemberInfo(UUID.fromString(crntMemberUuid)))
+					.orElseThrow(MemberNotFoundException::new);
+
+			List<PromptClick> promptClicks = promptClickRepository.findTop5ByMemberUuidOOrderByRegDtDesc(UUID.fromString(crntMemberUuid));
+
+			List<Prompt> prompts = new ArrayList<>();
+			for (PromptClick promptClick: promptClicks) {
+				prompts.add(promptClick.getPrompt());
+			}
+			List<PromptCardResponse> promptCardResponses = new ArrayList<>();
+
+			for (Prompt prompt : prompts) {
+				long commentCnt = promptCommentRepository.countAllByPromptPromptUuid(prompt.getPromptUuid());
+				long forkCnt = promptRepository.countAllByOriginPromptUuid(prompt.getPromptUuid());
+				long talkCnt = talkRepository.countAllByPromptPromptUuid(prompt.getPromptUuid());
+
+				boolean isBookmarded = promptBookmarkRepository.findByMemberUuidAndPrompt(UUID.fromString(crntMemberUuid), prompt) != null
+						? true : false;
+				boolean isLiked = promptLikeRepository.findByPromptAndMemberUuid(prompt, UUID.fromString(crntMemberUuid)) != null
+						? true : false;
+
+				PromptCardResponse promptCardResponse = PromptCardResponse.from(writerInfo, prompt, commentCnt, forkCnt, talkCnt, isBookmarded, isLiked);
+				promptCardResponses.add(promptCardResponse);
+			}
+
+			return promptCardResponses;
+		}
+	}
+
 
 }

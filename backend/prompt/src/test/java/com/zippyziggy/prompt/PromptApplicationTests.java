@@ -10,4 +10,10 @@ class PromptApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+	public void test() {
+		System.out.println("true = " + true);
+		System.out.println("!!!!!!!!!!!!!!!!!!!@21312312313123123123");
+	}
+
 }
