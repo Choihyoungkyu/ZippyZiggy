@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 
+import com.zippyziggy.prompt.common.kafka.KafkaProducer;
 import com.zippyziggy.prompt.prompt.client.MemberClient;
 import com.zippyziggy.prompt.prompt.client.SearchClient;
 import com.zippyziggy.prompt.prompt.dto.request.*;
@@ -53,6 +54,7 @@ public class PromptService{
 	private final RatingRepository ratingRepository;
 	private final PromptReportRepository promptReportRepository;
 	private final PromptClickRepository promptClickRepository;
+	private final KafkaProducer kafkaProducer;
 
 	// Exception 처리 필요
 	public PromptResponse createPrompt(PromptRequest data, UUID crntMemberUuid, MultipartFile thumbnail) {
@@ -68,6 +70,7 @@ public class PromptService{
 		Prompt prompt = Prompt.from(data, crntMemberUuid, thumbnailUrl);
 
 		promptRepository.save(prompt);
+		prompt.setOriginPromptUuid(prompt.getPromptUuid());
 
 		// 생성 시 search 서비스에 Elasticsearch INSERT 요청
 		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
@@ -108,7 +111,7 @@ public class PromptService{
 		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
 		final EsPromptRequest esPromptRequest = EsPromptRequest.of(prompt);
 		circuitBreaker.run(() -> searchClient
-				.modifyEsPrompt(esPromptRequest));
+				.modifyEsPrompt(promptUuid.toString(), esPromptRequest));
 
 		return PromptResponse.from(prompt);
 	}

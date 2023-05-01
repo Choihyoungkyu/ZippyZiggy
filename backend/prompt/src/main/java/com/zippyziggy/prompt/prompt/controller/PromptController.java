@@ -1,5 +1,6 @@
 package com.zippyziggy.prompt.prompt.controller;
 
+import com.zippyziggy.prompt.common.kafka.KafkaProducer;
 import com.zippyziggy.prompt.prompt.dto.request.*;
 import com.zippyziggy.prompt.prompt.dto.response.*;
 import com.zippyziggy.prompt.prompt.repository.PromptRepository;
@@ -36,8 +37,6 @@ public class PromptController {
 	private final PromptService promptService;
 	private final ForkPromptService forkPromptService;
 	private final PromptCommentService promptCommentService;
-	private final PromptRepository promptRepository;
-
 
 	/**
 	 *
@@ -222,11 +221,11 @@ public class PromptController {
 
 	@Operation(summary = "프롬프트 좋아요 하기(Authorization 필요)", description = "프롬프트에 좋아요 처리 진행. prompt의 UUID를 Pathvariable로 제공해야한다.")
 	@PostMapping("/{promptUuid}/like")
-	public ResponseEntity<?> likePrompt(@PathVariable UUID promptUuid,
-										@RequestHeader String crntMemberUuid) {
-
+	public ResponseEntity<?> likePrompt(
+		@PathVariable UUID promptUuid,
+		@RequestHeader String crntMemberUuid
+	) {
 		promptService.likePrompt(promptUuid, crntMemberUuid);
-
 		return ResponseEntity.ok("좋아요 처리 완료");
 	}
 
