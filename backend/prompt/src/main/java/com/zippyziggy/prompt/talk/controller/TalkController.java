@@ -2,24 +2,34 @@ package com.zippyziggy.prompt.talk.controller;
 
 import com.zippyziggy.prompt.talk.dto.request.TalkCommentRequest;
 import com.zippyziggy.prompt.talk.dto.request.TalkRequest;
-import com.zippyziggy.prompt.talk.dto.response.*;
+import com.zippyziggy.prompt.talk.dto.response.SearchTalkList;
+import com.zippyziggy.prompt.talk.dto.response.TalkCommentListResponse;
+import com.zippyziggy.prompt.talk.dto.response.TalkCommentResponse;
+import com.zippyziggy.prompt.talk.dto.response.TalkDetailResponse;
+import com.zippyziggy.prompt.talk.dto.response.TalkResponse;
 import com.zippyziggy.prompt.talk.service.TalkCommentService;
 import com.zippyziggy.prompt.talk.service.TalkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.UUID;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/talks")
@@ -29,11 +39,6 @@ public class TalkController {
 
 	private final TalkService talkService;
 	private final TalkCommentService talkCommentService;
-
-	@GetMapping("")
-	public ResponseEntity<List<TalkListResponse>> getTalkList(@RequestHeader String crntMemberuuid) {
-		return ResponseEntity.ok(talkService.getTalkList(crntMemberuuid));
-	}
 
 	@Operation(summary = "톡 생성", description = "새로운 톡을 생성한다.")
 	@PostMapping("")
@@ -161,7 +166,7 @@ public class TalkController {
 
 	@Operation(hidden = true)
 	@GetMapping("/members/profile/{crntMemberUuid}")
-	public ResponseEntity<MemberTalkListResponse> memberPrompts(
+	public ResponseEntity<SearchTalkList> memberPrompts(
 			@PathVariable String crntMemberUuid,
 			@PageableDefault(sort = "regDt",  direction = Sort.Direction.DESC) Pageable pageable
 	) {

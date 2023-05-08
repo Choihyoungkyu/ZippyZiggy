@@ -15,9 +15,9 @@ import com.zippyziggy.prompt.prompt.repository.PromptCommentRepository;
 import com.zippyziggy.prompt.prompt.repository.PromptLikeRepository;
 import com.zippyziggy.prompt.prompt.repository.PromptRepository;
 import com.zippyziggy.prompt.talk.dto.request.TalkRequest;
-import com.zippyziggy.prompt.talk.dto.response.MemberTalkListResponse;
+import com.zippyziggy.prompt.talk.dto.response.SearchTalkList;
 import com.zippyziggy.prompt.talk.dto.response.TalkDetailResponse;
-import com.zippyziggy.prompt.talk.dto.response.TalkListResponse;
+import com.zippyziggy.prompt.talk.dto.response.SearchTalk;
 import com.zippyziggy.prompt.talk.dto.response.TalkResponse;
 import com.zippyziggy.prompt.talk.exception.TalkNotFoundException;
 import com.zippyziggy.prompt.talk.model.Message;
@@ -63,12 +63,6 @@ public class TalkService {
 	private final KafkaProducer kafkaProducer;
 
 	private static final String VIEWCOOKIENAME = "alreadyViewCookie";
-
-	// 은지가 짤거임, 지금 검색 안됨 그냥 전체 조회
-	public List<TalkListResponse> getTalkList(String crntMemberUuid) {
-		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
-		return getTalks(circuitBreaker, talkRepository.findAll(), crntMemberUuid);
-	}
 
 	// promptUuid가 있는지 없는지에 따라 -> 프롬프트 활용 or 그냥 대화
 	public TalkResponse createTalk(TalkRequest data, UUID crntMemberUuid) {
@@ -118,11 +112,11 @@ public class TalkService {
 
 			PromptCardResponse promptCardResponse = getPromptCardResponse(crntMemberUuid, originPrompt, originMember);
 
-			List<TalkListResponse> talkListResponses = getTalkListResponses(circuitBreaker, originPrompt, crntMemberUuid, pageable);
+			List<SearchTalk> searchTalkListRespons = getTalkListResponses(circuitBreaker, originPrompt, crntMemberUuid, pageable);
 
 			response.setOriginMember(originMember);
 			response.setOriginPrompt(promptCardResponse);
-			response.setTalkList(talkListResponses);
+			response.setTalkList(searchTalkListRespons);
 		}
 		return response;
 
@@ -155,17 +149,17 @@ public class TalkService {
 		return promptCardResponse;
 	}
 
-	public List<TalkListResponse> getTalkListResponses(CircuitBreaker circuitBreaker, Prompt originPrompt, String crntMemberUuid, Pageable pageable) {
+	public List<SearchTalk> getTalkListResponses(CircuitBreaker circuitBreaker, Prompt originPrompt, String crntMemberUuid, Pageable pageable) {
 
 		List<Talk> talks = talkRepository.findAllByPromptPromptUuid(originPrompt.getPromptUuid(), pageable).toList();
 
-		List<TalkListResponse> talkListResponses = getTalks(circuitBreaker, talks, crntMemberUuid);
+		List<SearchTalk> searchTalkListRespons = getTalks(circuitBreaker, talks, crntMemberUuid);
 
-		return talkListResponses;
+		return searchTalkListRespons;
 	}
 
-	public List<TalkListResponse> getTalks(CircuitBreaker circuitBreaker, List<Talk> talks, String crntMemberUuid) {
-		List<TalkListResponse> talkListResponses = talks.stream().map(t -> {
+	public List<SearchTalk> getTalks(CircuitBreaker circuitBreaker, List<Talk> talks, String crntMemberUuid) {
+		List<SearchTalk> searchTalkListResponse = talks.stream().map(t -> {
 
 			boolean isTalkLiked;
 
@@ -182,18 +176,18 @@ public class TalkService {
 			MemberResponse memberResponse = circuitBreaker.run(() -> memberClient.getMemberInfo(t.getMemberUuid())
 					.orElseThrow(MemberNotFoundException::new));
 
-			return TalkListResponse.from(
-				t.getId(),
-				t.getTitle(),
+			return SearchTalk.from(
+				t,
 				question,
 				answer,
 				memberResponse,
 				talkLikeCnt,
 				talkCommentCnt,
-				isTalkLiked);
+				isTalkLiked
+			);
 
 		}).collect(Collectors.toList());
-		return talkListResponses;
+		return searchTalkListResponse;
 	}
 
 	public void removeTalk(UUID crntMemberUuid, Long talkId) {
@@ -305,11 +299,11 @@ public class TalkService {
 		return (int) now.until(tomorrow, ChronoUnit.SECONDS);
 	}
 
-    public MemberTalkListResponse findTalksByMemberUuid(String crntMemberUuid, Pageable pageable) {
+    public SearchTalkList findTalksByMemberUuid(String crntMemberUuid, Pageable pageable) {
 		CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
     	final Page<Talk> talks = talkRepository.findTalksByMemberUuid(UUID.fromString(crntMemberUuid), pageable);
-		final List<TalkListResponse> talkListResponses = getTalks(circuitBreaker, talks.toList(), crntMemberUuid);
+		final List<SearchTalk> searchTalkListResponse = getTalks(circuitBreaker, talks.toList(), crntMemberUuid);
 
-		return new MemberTalkListResponse(Math.toIntExact(talks.getTotalElements()), talkListResponses);
+		return new SearchTalkList(talks.getTotalElements(), talks.getTotalPages(), searchTalkListResponse);
 	}
 }
