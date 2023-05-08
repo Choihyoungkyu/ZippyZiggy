@@ -10,6 +10,6 @@ import lombok.Data;
 public class PromptTalkListResponse {
 
 	private int talkCnt;
-	private List<TalkListResponse> talks;
+	private List<SearchTalk> talks;
 
 }

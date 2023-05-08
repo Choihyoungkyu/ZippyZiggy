@@ -30,11 +30,6 @@ public class TalkController {
 	private final TalkService talkService;
 	private final TalkCommentService talkCommentService;
 
-	@GetMapping("")
-	public ResponseEntity<List<TalkListResponse>> getTalkList(@RequestHeader String crntMemberuuid) {
-		return ResponseEntity.ok(talkService.getTalkList(crntMemberuuid));
-	}
-
 	@Operation(summary = "톡 생성", description = "새로운 톡을 생성한다.")
 	@PostMapping("")
 	@ApiResponses({
@@ -161,7 +156,7 @@ public class TalkController {
 
 	@Operation(hidden = true)
 	@GetMapping("/members/profile/{crntMemberUuid}")
-	public ResponseEntity<MemberTalkListResponse> memberPrompts(
+	public ResponseEntity<SearchTalkList> memberPrompts(
 			@PathVariable String crntMemberUuid,
 			@PageableDefault(sort = "regDt",  direction = Sort.Direction.DESC) Pageable pageable
 	) {

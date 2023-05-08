@@ -9,7 +9,7 @@ import com.zippyziggy.prompt.prompt.exception.*;
 import com.zippyziggy.prompt.prompt.model.*;
 import com.zippyziggy.prompt.prompt.repository.*;
 import com.zippyziggy.prompt.talk.dto.response.PromptTalkListResponse;
-import com.zippyziggy.prompt.talk.dto.response.TalkListResponse;
+import com.zippyziggy.prompt.talk.dto.response.SearchTalk;
 import com.zippyziggy.prompt.talk.repository.TalkRepository;
 import com.zippyziggy.prompt.talk.service.TalkService;
 import io.github.flashvayne.chatgpt.service.ChatgptService;
@@ -235,9 +235,9 @@ public class PromptService{
 		Prompt prompt = promptRepository
 				.findByPromptUuidAndStatusCode(promptUuid, StatusCode.OPEN)
 				.orElseThrow(PromptNotFoundException::new);
-		List<TalkListResponse> talkListResponses = talkService.getTalkListResponses(circuitBreaker, prompt,
+		List<SearchTalk> searchTalkListRespons = talkService.getTalkListResponses(circuitBreaker, prompt,
 				crntMemberUuid, pageable);
-		return new PromptTalkListResponse(talkListResponses.size(), talkListResponses);
+		return new PromptTalkListResponse(searchTalkListRespons.size(), searchTalkListRespons);
 	}
 
     /*

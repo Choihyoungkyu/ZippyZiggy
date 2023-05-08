@@ -37,6 +37,6 @@ public class TalkDetailResponse {
 	private PromptCardResponse originPrompt;
 
 	@Nullable
-	private List<TalkListResponse> talkList;
+	private List<SearchTalk> talkList;
 
 }
