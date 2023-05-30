@@ -56,6 +56,10 @@ const LoginWarp = styled.div`
     padding: 16px;
     background-color: ${({ theme: { colors } }) => colors.bgColor};
   }
+
+  .link {
+    text-decoration: underline;
+  }
 `;
 
 // 이미지 파일이면 URL.createObjectURL() 메서드를 이용하여 이미지 URL을 생성합니다
@@ -129,6 +133,17 @@ export default function SignUp() {
   // 회원가입 버튼 클릭
   const handleSignupBtnClick = async (event) => {
     event.preventDefault();
+    if (/^[ㄱ-ㅎ|ㅏ-ㅣ|가-힣|a-z|A-Z|0-9]*$/.test(nickname) === false) {
+      Toastify({
+        text: message.ValidationFailNickname,
+        duration: 1000,
+        position: 'center',
+        stopOnFocus: true,
+        style: toastifyCSS.error,
+      }).showToast();
+      return;
+    }
+
     const resultNickname = await getNicknameAPI(nickname);
     if (resultNickname.result === 'FAIL') {
       setStatusNickname('error');
@@ -218,7 +233,6 @@ export default function SignUp() {
               accept="image/*"
               onChange={registerImage}
               ref={inputRef}
-              maxLength={10}
               style={{ display: 'none' }}
             />
           </label>
@@ -229,6 +243,7 @@ export default function SignUp() {
             id="nickname"
             placeholder="닉네임을 입력해주세요"
             value={nickname}
+            maxLength={10}
             onChange={(e) => setBeforeNickname(e.target.value)}
             required
           />
@@ -242,11 +257,11 @@ export default function SignUp() {
           <div className="legal">
             <Paragraph sizeType="sm" textAlign="left">
               회원가입을 하시면{' '}
-              <Link className="link" href="/legal#termsOfUse">
+              <Link className="link" target="_blank" href="/legal#termsOfUse">
                 이용약관
               </Link>{' '}
               및{' '}
-              <Link className="link" href="/legal#privacyPolicy">
+              <Link className="link" target="_blank" href="/legal#privacyPolicy">
                 개인정보처리방침
               </Link>
               에 동의하시게 됩니다.
